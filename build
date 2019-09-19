@@ -1,0 +1,68 @@
+#!/bin/bash -e
+PLATFORM=$(uname)
+ISO=debian.iso
+SEED=debianvm.seed
+
+HOST=VM-$(uuidgen)
+DEV=sda
+DOMAIN=int.rbrk.at
+PWROOT=toor
+USER=api
+PWUSER=api
+PUBKEY=id_rsa.pub
+
+#updates & init
+#if [ "$PLATFORM" = "Darwin" ]; then
+	# os x
+#	brew install xorriso
+#else
+	# debian & ubuntu
+#	sudo apt-get update -y
+	#sudo apt-get upgrade -y
+#	sudo apt-get install -y syslinux-utils libarchive-tools  xorriso uuid-runtime
+#fi
+
+#unpack iso
+mkdir workdir
+bsdtar -C workdir/ -xf debian.iso
+
+#build isohybrid-mbr
+dd if=$ISO of=isohdpfx.bin bs=1 count=432
+
+#inject assets
+cp "assets/auto_resize_vda.sh" "workdir/"
+cp "assets/isolinux.cfg" "workdir/isolinux/"
+cp "secrets/$PUBKEY" "workdir/$PUBKEY"
+m4 \
+	-D __HOST__="$HOST" \
+	-D __DOMAIN__="$DOMAIN" \
+	-D __PWROOT__="$PWROOT" \
+	-D __USER__="$USER" \
+	-D __PWUSER__="$PWUSER" \
+	-D __DEV__="$DEV" \
+	"seeds/$SEED" > "workdir/preseed.cfg"
+
+m4 \
+	-D __USER__="$USER" \
+	"assets/sudoers.m4" > "workdir/sudoers"
+
+m4 \
+	-D __USER__="$USER" \
+	-D __PUBLIC_KEY__="$PUBKEY" \
+	"assets/late_command.sh.m4" > "workdir/late_command.sh"
+
+#fix md5
+#cd workdir
+#sudo md5sum `find -follow -type f` > md5sum.txt
+#cd -
+
+#build iso
+sudo xorriso -as mkisofs -r -V 'Debian 10.0.0 amd64 n' -o proxmox-preseed.iso -J -joliet-long -cache-inodes -isohybrid-mbr isohdpfx.bin \
+-b isolinux/isolinux.bin -c isolinux/boot.cat -boot-load-size 4 -boot-info-table -no-emul-boot -eltorito-alt-boot \
+-e boot/grub/efi.img -no-emul-boot -isohybrid-gpt-basdat -isohybrid-apm-hfsplus workdir/
+
+#cleanup
+sudo rm -rf workdir
+sudo rm isohdpfx.bin
+
+exit 0

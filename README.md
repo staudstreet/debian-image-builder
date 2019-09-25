@@ -32,8 +32,8 @@ There are two executables: build and cleanup. Open build using a text editor to 
 At this point it is advised to use the the "debianvm.seed" or alternatively your own. 
 
 # Issues
-* Make user in preseed a var
-* fix remaining required interactions (keymap & network mirror)
+* make user in preseed a var
 * remove need to use sudo for build
-* Add support for macos(currently bsdtar doesn't work)
+* add support for macos(currently bsdtar doesn't work)
 * clean up code
+* hardcoded keyboardlayout (in isolinux.cfg & preseed file

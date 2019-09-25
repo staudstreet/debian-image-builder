@@ -1,6 +1,6 @@
 #!/bin/bash -e
 PLATFORM=$(uname)
-ISO=debian.iso
+ISO=debian-net.iso
 SEED=debianvm.seed
 
 HOST=VM-$(uuidgen)
@@ -19,12 +19,12 @@ PUBKEY=id_rsa.pub
 	# debian & ubuntu
 #	sudo apt-get update -y
 	#sudo apt-get upgrade -y
-#	sudo apt-get install -y syslinux-utils libarchive-tools  xorriso uuid-runtime
+#	sudo apt-get install -y syslinux-utils libarchive-tools m4 xorriso uuid-runtime
 #fi
 
 #unpack iso
 mkdir workdir
-bsdtar -C workdir/ -xf debian.iso
+bsdtar -C workdir/ -xf $ISO
 
 #build isohybrid-mbr
 dd if=$ISO of=isohdpfx.bin bs=1 count=432
@@ -51,13 +51,15 @@ m4 \
 	-D __PUBLIC_KEY__="$PUBKEY" \
 	"assets/late_command.sh.m4" > "workdir/late_command.sh"
 
+#inject preseed in init.rd
+
 #fix md5
 #cd workdir
 #sudo md5sum `find -follow -type f` > md5sum.txt
 #cd -
 
 #build iso
-sudo xorriso -as mkisofs -r -V 'Debian 10.0.0 amd64 n' -o proxmox-preseed.iso -J -joliet-long -cache-inodes -isohybrid-mbr isohdpfx.bin \
+sudo xorriso -as mkisofs -r -V 'Debian 10.0.0 amd64 n' -o debian-preseed.iso -J -joliet-long -cache-inodes -isohybrid-mbr isohdpfx.bin \
 -b isolinux/isolinux.bin -c isolinux/boot.cat -boot-load-size 4 -boot-info-table -no-emul-boot -eltorito-alt-boot \
 -e boot/grub/efi.img -no-emul-boot -isohybrid-gpt-basdat -isohybrid-apm-hfsplus workdir/
 

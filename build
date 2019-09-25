@@ -2,6 +2,7 @@
 PLATFORM=$(uname)
 ISO=debian-net.iso
 SEED=debianvm.seed
+PUBKEY=id_rsa.pub
 
 HOST=VM-$(uuidgen)
 DEV=sda
@@ -9,7 +10,6 @@ DOMAIN=int.rbrk.at
 PWROOT=toor
 USER=api
 PWUSER=api
-PUBKEY=id_rsa.pub
 
 #updates & init
 #if [ "$PLATFORM" = "Darwin" ]; then
@@ -23,8 +23,8 @@ PUBKEY=id_rsa.pub
 #fi
 
 #unpack iso
-mkdir workdir
 echo "Unpacking ISO."
+mkdir workdir
 bsdtar -C workdir/ -xf $ISO
 
 #build isohybrid-mbr
@@ -33,9 +33,11 @@ dd if=$ISO of=isohdpfx.bin bs=1 count=432
 #inject assets
 echo "Injecting assets."
 sudo cp "assets/auto_resize_vda.sh" "workdir/"
-sudo cp "assets/isolinux.cfg" "workdir/isolinux/"
 sudo cp "secrets/$PUBKEY" "workdir/$PUBKEY"
-m4 \
+sudo m4 \
+	-D __KEYMAP__="$KEYMAP" \
+	"assets/isolinux.cfg" > "workdir/isolinux/isolinux.cfg"
+sudo m4 \
 	-D __HOST__="$HOST" \
 	-D __DOMAIN__="$DOMAIN" \
 	-D __PWROOT__="$PWROOT" \
@@ -44,17 +46,17 @@ m4 \
 	-D __DEV__="$DEV" \
 	"seeds/$SEED" > "workdir/preseed.cfg"
 
-m4 \
+sudo m4 \
 	-D __USER__="$USER" \
 	"assets/sudoers.m4" > "workdir/sudoers"
 
-m4 \
+sudo m4 \
 	-D __USER__="$USER" \
 	-D __PUBLIC_KEY__="$PUBKEY" \
 	"assets/late_command.sh.m4" > "workdir/late_command.sh"
 
 #build iso
-echo "Repackage ISO"
+echo "Repackaging ISO."
 sudo xorriso -as mkisofs -r -V 'Debian 10.0.0 amd64 n' -o debian-preseed.iso -J -joliet-long -cache-inodes -isohybrid-mbr isohdpfx.bin \
 -b isolinux/isolinux.bin -c isolinux/boot.cat -boot-load-size 4 -boot-info-table -no-emul-boot -eltorito-alt-boot \
 -e boot/grub/efi.img -no-emul-boot -isohybrid-gpt-basdat -isohybrid-apm-hfsplus workdir/

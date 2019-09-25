@@ -32,4 +32,5 @@ There are two executables: build and cleanup. Open build using a text editor to 
 At this point it is advised to use the the "debianvm.seed" or alternatively your own. 
 
 # Issues
-* add support for macos(currently bsdtar doesn't work)
+
+Currently none. :)

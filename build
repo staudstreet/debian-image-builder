@@ -24,15 +24,17 @@ PUBKEY=id_rsa.pub
 
 #unpack iso
 mkdir workdir
+echo "Unpacking ISO."
 bsdtar -C workdir/ -xf $ISO
 
 #build isohybrid-mbr
 dd if=$ISO of=isohdpfx.bin bs=1 count=432
 
 #inject assets
-cp "assets/auto_resize_vda.sh" "workdir/"
-cp "assets/isolinux.cfg" "workdir/isolinux/"
-cp "secrets/$PUBKEY" "workdir/$PUBKEY"
+echo "Injecting assets."
+sudo cp "assets/auto_resize_vda.sh" "workdir/"
+sudo cp "assets/isolinux.cfg" "workdir/isolinux/"
+sudo cp "secrets/$PUBKEY" "workdir/$PUBKEY"
 m4 \
 	-D __HOST__="$HOST" \
 	-D __DOMAIN__="$DOMAIN" \
@@ -51,19 +53,14 @@ m4 \
 	-D __PUBLIC_KEY__="$PUBKEY" \
 	"assets/late_command.sh.m4" > "workdir/late_command.sh"
 
-#inject preseed in init.rd
-
-#fix md5
-#cd workdir
-#sudo md5sum `find -follow -type f` > md5sum.txt
-#cd -
-
 #build iso
+echo "Repackage ISO"
 sudo xorriso -as mkisofs -r -V 'Debian 10.0.0 amd64 n' -o debian-preseed.iso -J -joliet-long -cache-inodes -isohybrid-mbr isohdpfx.bin \
 -b isolinux/isolinux.bin -c isolinux/boot.cat -boot-load-size 4 -boot-info-table -no-emul-boot -eltorito-alt-boot \
 -e boot/grub/efi.img -no-emul-boot -isohybrid-gpt-basdat -isohybrid-apm-hfsplus workdir/
 
 #cleanup
+echo "Cleaning up."
 sudo rm -rf workdir
 sudo rm isohdpfx.bin
 

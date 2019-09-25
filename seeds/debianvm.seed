@@ -46,8 +46,8 @@ d-i pkgsel/include string qemu-guest-agent cloud-init openssh-server
 d-i passwd/root-password password __PWROOT__
 d-i passwd/root-password-again password __PWROOT__
 
-d-i passwd/user-fullname string api
-d-i passwd/username string api
+d-i passwd/user-fullname string __USER__
+d-i passwd/username string __USER__
 d-i passwd/user-password password __PWUSER__
 d-i passwd/user-password-again password __PWUSER__
 

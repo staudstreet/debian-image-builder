@@ -1,11 +1,13 @@
 #!/bin/bash -e
 PLATFORM=$(uname)
-ISO=debian-net.iso
+INISO=debian-net.iso
+OUTISO=debian-preseed.iso
 SEED=debianvm.seed
 PUBKEY=id_rsa.pub
 
-HOST=VM-$(uuidgen)
 DEV=sda
+KEYMAP=at
+HOST=VM-$(uuidgen)
 DOMAIN=int.rbrk.at
 PWROOT=toor
 USER=api
@@ -25,10 +27,10 @@ PWUSER=api
 #unpack iso
 echo "Unpacking ISO."
 mkdir workdir
-bsdtar -C workdir/ -xf $ISO
+bsdtar -C workdir/ -xf $INISO
 
 #build isohybrid-mbr
-dd if=$ISO of=isohdpfx.bin bs=1 count=432
+dd if=$INISO of=isohdpfx.bin bs=1 count=432
 
 #inject assets
 echo "Injecting assets."
@@ -44,7 +46,7 @@ sudo m4 \
 	-D __USER__="$USER" \
 	-D __PWUSER__="$PWUSER" \
 	-D __DEV__="$DEV" \
-	"seeds/$SEED" > "workdir/preseed.cfg"
+	"assets/$SEED" > "workdir/preseed.cfg"
 
 sudo m4 \
 	-D __USER__="$USER" \
@@ -57,7 +59,7 @@ sudo m4 \
 
 #build iso
 echo "Repackaging ISO."
-sudo xorriso -as mkisofs -r -V 'Debian 10.0.0 amd64 n' -o debian-preseed.iso -J -joliet-long -cache-inodes -isohybrid-mbr isohdpfx.bin \
+sudo xorriso -as mkisofs -r -V 'Debian 10.0.0 amd64 n' -o $OUTISO -J -joliet-long -cache-inodes -isohybrid-mbr isohdpfx.bin \
 -b isolinux/isolinux.bin -c isolinux/boot.cat -boot-load-size 4 -boot-info-table -no-emul-boot -eltorito-alt-boot \
 -e boot/grub/efi.img -no-emul-boot -isohybrid-gpt-basdat -isohybrid-apm-hfsplus workdir/
 

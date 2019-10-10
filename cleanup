@@ -1,5 +1,5 @@
 #!/bin/bash -e
 sudo rm -rf workdir
-rm isohdpfx.bin
+rm -f isohdpfx.bin
 echo "Cleanup complete."
 exit 0

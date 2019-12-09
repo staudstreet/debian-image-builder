@@ -25,7 +25,15 @@ Shout out to the the [debian wiki](https://wiki.debian.org/DebianInstaller/Prese
     └── proxmox.seed
 ```
 
-Before you can start building ISOs you will need a Debian ISO. I would advise to use the netboot one as you'll need to download some packages no matter what. You will alos need to create place "id_rsa.pub", so a SSH public key, into the secrets folder to allow you to connect securely.
+**Dependencies**
+* libarchive-tools 	Required to unpack the ISO
+* m4 			    Required to replace some vars in various files (Planned to be replaced by sed when I have time)
+* xorriso 		    Required to repackage the ISO
+* uuid-runtime		Required for random UUID in hostname (so not really, just change the variable for the hostname)
+
+**Usage**
+
+Before you can start building ISOs you will need a Debian ISO. I would advise to use the netboot one as you'll need to download some packages no matter what. You will also need to place a "id_rsa.pub", so a SSH public key, into the secrets folder to allow you to connect securely.
 
 There are two executables: build and cleanup. Open build using a text editor to set the variables as they fit your needs. After that start a build by running 'sudo ./build'. Depending on what kind of ISO you have (netboot, cd or dvd) this process will take between 5 and 60 seconds. After the build finishes it will automatically start a clean up. Should the build fail though this will have to be done manually by executing './cleanup'.
 
